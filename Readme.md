@@ -9,7 +9,7 @@
 1. Open iTerm
 2. Paste this code and press RETURN
 `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-3. If prompted, enter the password you use to unlock your computer (it'll look like you aren't typing but you are)
+3. If prompted, enter the password you use to unlock your computer _(it'll look like you aren't typing but you are)_
 4. Paste this code and press RETURN
 `brew install git`
 5. Paste this code and press RETURN
