@@ -1,4 +1,4 @@
-#Designer Getting Started#
+#Before Getting Started#
 
 ##Install These##
 1. Install <a href="https://www.sublimetext.com/" target="_blank">Sublime</a>
