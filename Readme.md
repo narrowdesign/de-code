@@ -20,3 +20,6 @@
 
 6. Paste this code and press RETURN<br>
 `sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"`
+
+7. Paste this code and press RETURN<br>
+`npm install http-server -g`
