@@ -2,27 +2,9 @@
 
 When you're done you'll know how to:
 
--List the things you want in an app/website (HTML)
+1. List the things you want in an app/website with [HTML](https://www.w3schools.com/TAgs/)
 
--Style the things (CSS)
+2. Style the things with [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference#Keyword_index)
 
--Tell the things what to do (JavaScript)
+3. Tell the things what to do [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference)
 
-
-vcr
-  case
-  tray
-  control-panel
-    play
-    pause
-    stop
-    eject
-  display
-    clock
-    play_icon
-
-
-FUN
-
-- scroll scrubbing video
--
