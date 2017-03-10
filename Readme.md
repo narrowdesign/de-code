@@ -1,9 +1,9 @@
-#Getting Started#
+#Designer Getting Started#
 
 ##Install These##
-1. Install [Sublime](https://www.sublimetext.com/)
-2. Install [iTerm](https://www.iterm2.com/)
-3. Install [Node.js](https://www.nodejs.org/)
+1. Install <a href="https://www.sublimetext.com/" target="_blank">Sublime</a>
+2. Install <a href="https://www.iterm2.com/" target="_blank">iTerm</a>
+3. Install <a href="https://www.nodejs.org/" target="_blank">Node.js</a>
 
 ##Run These##
 1. Open iTerm
