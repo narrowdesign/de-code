@@ -3,15 +3,14 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Stars, Text } from "@react-three/drei";
+import { OrbitControls, Stars, Html } from "@react-three/drei";
 import { conceptGraph } from "@/lib/conceptGraph";
 import { generateLayout, LayoutResult } from "@/lib/layoutEngine";
-import ConceptCluster from "./ConceptCluster";
 import ConceptThread from "./ConceptThread";
+import ConceptCluster from "./ConceptCluster";
 
-// The navigation stack — each level represents a zoom into a concept
 interface ZoomLevel {
-  conceptId: string | null; // null = top level
+  conceptId: string | null;
   layout: LayoutResult;
   conceptIds: string[];
 }
@@ -32,10 +31,7 @@ function CameraController({
   }, [target]);
 
   useFrame(() => {
-    // Smooth camera target interpolation
     currentTarget.current.lerp(targetRef.current, 0.03);
-
-    // Report camera distance
     const dist = camera.position.distanceTo(currentTarget.current);
     onDistanceChange(dist);
   });
@@ -43,13 +39,58 @@ function CameraController({
   return null;
 }
 
+// Labels rendered as HTML overlays — much more reliable than 3D Text
+function ConceptLabel({
+  position,
+  label,
+  isActive,
+  cameraDistance,
+  onClick,
+}: {
+  position: THREE.Vector3;
+  label: string;
+  isActive: boolean;
+  cameraDistance: number;
+  onClick: () => void;
+}) {
+  if (cameraDistance > 35) return null;
+  const opacity = Math.min(1, Math.max(0, (35 - cameraDistance) / 15));
+
+  return (
+    <Html
+      position={[position.x, position.y + 0.5, position.z]}
+      center
+      style={{ pointerEvents: "none" }}
+    >
+      <div
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        style={{
+          color: isActive ? "#fff" : "#ccd",
+          fontSize: isActive ? 13 : 11,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontWeight: isActive ? 600 : 400,
+          whiteSpace: "nowrap",
+          textShadow: "0 0 8px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,1)",
+          opacity,
+          pointerEvents: "auto",
+          cursor: "pointer",
+          userSelect: "none",
+          transform: "translateY(-12px)",
+          transition: "all 0.2s ease",
+        }}
+      >
+        {label}
+      </div>
+    </Html>
+  );
+}
+
 function SceneContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const [cameraDistance, setCameraDistance] = useState(25);
-  const [cameraTarget, setCameraTarget] = useState(new THREE.Vector3(0, 0, 0));
+  const [cameraTarget, setCameraTarget] = useState(() => new THREE.Vector3(0, 0, 0));
 
-  // Navigation state
   const [zoomStack, setZoomStack] = useState<ZoomLevel[]>(() => {
     const topConcepts = conceptGraph.getTopConcepts(12);
     const layout = generateLayout(topConcepts, new THREE.Vector3(0, 0, 0), 10);
@@ -59,22 +100,18 @@ function SceneContent() {
   const [activeConcept, setActiveConcept] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState(false);
 
-  // Handle clicking on a concept to zoom in
   const handleFocus = useCallback((conceptId: string, position: THREE.Vector3) => {
     if (transitioning) return;
 
-    // If clicking the same concept that's already active, zoom into it
     if (activeConcept === conceptId) {
       setTransitioning(true);
 
-      // Get the concept's related concepts for the next zoom level
       const node = conceptGraph.getOrGenerate(conceptId);
       const subConcepts = node.links
         .sort((a, b) => b.weight - a.weight)
         .slice(0, 14)
         .map(l => l.target);
 
-      // Include the concept itself in its own sub-space
       if (!subConcepts.includes(conceptId)) {
         subConcepts.push(conceptId);
       }
@@ -87,10 +124,9 @@ function SceneContent() {
         conceptIds: subConcepts,
       }]);
 
-      setCameraTarget(position);
+      setCameraTarget(position.clone());
       setActiveConcept(null);
 
-      // Animate camera closer
       if (controlsRef.current) {
         const controls = controlsRef.current;
         const targetDist = 12;
@@ -101,7 +137,7 @@ function SceneContent() {
         const animate = () => {
           const elapsed = Date.now() - startTime;
           const t = Math.min(1, elapsed / duration);
-          const eased = 1 - Math.pow(1 - t, 3); // ease out cubic
+          const eased = 1 - Math.pow(1 - t, 3);
           const dist = startDist + (targetDist - startDist) * eased;
 
           const direction = new THREE.Vector3()
@@ -120,13 +156,14 @@ function SceneContent() {
           }
         };
         requestAnimationFrame(animate);
+      } else {
+        setTimeout(() => setTransitioning(false), 1200);
       }
     } else {
       setActiveConcept(conceptId);
     }
   }, [activeConcept, transitioning, cameraDistance]);
 
-  // Handle going back up
   const handleBack = useCallback(() => {
     if (zoomStack.length <= 1 || transitioning) return;
     setTransitioning(true);
@@ -134,7 +171,7 @@ function SceneContent() {
     setZoomStack(prev => {
       const next = prev.slice(0, -1);
       const newLevel = next[next.length - 1];
-      setCameraTarget(newLevel.layout.center);
+      setCameraTarget(newLevel.layout.center.clone());
       return next;
     });
     setActiveConcept(null);
@@ -142,35 +179,30 @@ function SceneContent() {
     setTimeout(() => setTransitioning(false), 800);
   }, [zoomStack.length, transitioning]);
 
-  // Build the breadcrumb trail
   const breadcrumbs = zoomStack.map((level, i) =>
     i === 0 ? "Overview" : level.conceptId || ""
   );
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.3} />
-      <pointLight position={[20, 20, 20]} intensity={0.8} color="#ffffff" />
+      <ambientLight intensity={0.4} />
+      <pointLight position={[20, 20, 20]} intensity={0.8} />
       <pointLight position={[-15, -10, 15]} intensity={0.4} color="#4488ff" />
       <pointLight position={[0, -20, -10]} intensity={0.3} color="#ff4488" />
 
-      {/* Background stars */}
-      <Stars radius={100} depth={50} count={3000} factor={4} fade speed={0.5} />
+      <Stars radius={100} depth={50} count={2000} factor={4} fade speed={0.5} />
 
-      {/* Camera controls */}
       <OrbitControls
         ref={controlsRef}
         enableDamping
         dampingFactor={0.05}
         minDistance={1}
-        maxDistance={100}
+        maxDistance={80}
         target={cameraTarget}
         makeDefault
       />
       <CameraController target={cameraTarget} onDistanceChange={setCameraDistance} />
 
-      {/* Render all zoom levels with fading */}
       {zoomStack.map((level, levelIndex) => {
         const isCurrentLevel = levelIndex === zoomStack.length - 1;
         const isPreviousLevel = levelIndex === zoomStack.length - 2;
@@ -180,7 +212,6 @@ function SceneContent() {
 
         return (
           <group key={`level-${levelIndex}-${level.conceptId}`}>
-            {/* Threads */}
             {level.layout.threads.map(thread => (
               <ConceptThread
                 key={thread.id}
@@ -189,98 +220,102 @@ function SceneContent() {
               />
             ))}
 
-            {/* Concept clusters */}
             {level.layout.nodes.map(node => (
-              <ConceptCluster
-                key={node.id}
-                node={node}
-                onFocus={isCurrentLevel ? handleFocus : () => {}}
-                zoomLevel={levelIndex}
-                isActive={activeConcept === node.id && isCurrentLevel}
-                cameraDistance={cameraDistance}
-              />
+              <group key={node.id}>
+                <ConceptCluster
+                  node={node}
+                  onFocus={isCurrentLevel ? handleFocus : () => {}}
+                  isActive={activeConcept === node.id && isCurrentLevel}
+                  cameraDistance={cameraDistance}
+                />
+                {isCurrentLevel && (
+                  <ConceptLabel
+                    position={node.position}
+                    label={node.id}
+                    isActive={activeConcept === node.id}
+                    cameraDistance={cameraDistance}
+                    onClick={() => {
+                      if (!transitioning) {
+                        handleFocus(node.id, node.position);
+                      }
+                    }}
+                  />
+                )}
+              </group>
             ))}
           </group>
         );
       })}
 
-      {/* Depth hint: faint grid at the "floor" */}
       <gridHelper
         args={[100, 50, "#111133", "#111133"]}
         position={[0, -15, 0]}
       />
 
-      {/* HUD: breadcrumbs (rendered in 3D space, facing camera) */}
-      <BreadcrumbHUD
-        breadcrumbs={breadcrumbs}
-        onBack={handleBack}
-        canGoBack={zoomStack.length > 1}
-      />
-    </>
-  );
-}
-
-function BreadcrumbHUD({
-  breadcrumbs,
-  onBack,
-  canGoBack,
-}: {
-  breadcrumbs: string[];
-  onBack: () => void;
-  canGoBack: boolean;
-}) {
-  const { camera } = useThree();
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame(() => {
-    if (groupRef.current) {
-      // Position HUD relative to camera
-      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
-      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-
-      groupRef.current.position.copy(camera.position)
-        .add(forward.multiplyScalar(5))
-        .add(up.multiplyScalar(2.2))
-        .add(right.multiplyScalar(-2));
-      groupRef.current.quaternion.copy(camera.quaternion);
-    }
-  });
-
-  const trail = breadcrumbs.join(" → ");
-
-  return (
-    <group ref={groupRef}>
-      <Text
-        fontSize={0.12}
-        color="#aaaacc"
-        anchorX="left"
-        anchorY="middle"
-        fillOpacity={0.7}
+      {/* Breadcrumb HUD as HTML */}
+      <Html
+        position={[0, 0, 0]}
+        fullscreen
+        style={{ pointerEvents: "none" }}
       >
-        {trail}
-      </Text>
-      {canGoBack && (
-        <Text
-          position={[0, -0.2, 0]}
-          fontSize={0.1}
-          color="#6688ff"
-          anchorX="left"
-          anchorY="middle"
-          fillOpacity={0.6}
-          onClick={onBack}
-          onPointerOver={(e) => {
-            (e.object as THREE.Mesh).material = new THREE.MeshBasicMaterial({ color: "#88aaff" });
-            document.body.style.cursor = "pointer";
-          }}
-          onPointerOut={() => {
-            document.body.style.cursor = "default";
-          }}
-        >
-          ← Back
-        </Text>
-      )}
-    </group>
+        <div style={{
+          position: "fixed",
+          top: 16,
+          left: 20,
+          pointerEvents: "auto",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+        }}>
+          <div style={{
+            color: "#667",
+            fontSize: 10,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: 8,
+            opacity: 0.5,
+          }}>
+            Concept Space
+          </div>
+          <div style={{
+            color: "#aab",
+            fontSize: 12,
+            marginBottom: 6,
+          }}>
+            {breadcrumbs.join(" → ")}
+          </div>
+          {zoomStack.length > 1 && (
+            <button
+              onClick={handleBack}
+              style={{
+                background: "rgba(40, 40, 80, 0.6)",
+                border: "1px solid rgba(100, 100, 200, 0.3)",
+                color: "#88aaff",
+                fontSize: 12,
+                padding: "4px 12px",
+                borderRadius: 4,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              ← Back
+            </button>
+          )}
+        </div>
+
+        <div style={{
+          position: "fixed",
+          bottom: 20,
+          left: 0,
+          right: 0,
+          textAlign: "center",
+          color: "#556",
+          fontSize: 12,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          opacity: 0.5,
+        }}>
+          Tap to select · Tap again to zoom in · Pinch to zoom · Drag to orbit
+        </div>
+      </Html>
+    </>
   );
 }
 
@@ -292,42 +327,9 @@ export default function ConceptSpace() {
         gl={{ antialias: true, alpha: false }}
         style={{ background: "#000008" }}
       >
-        <fog attach="fog" args={["#000008", 30, 100]} />
+        <fog attach="fog" args={["#000008", 30, 80]} />
         <SceneContent />
       </Canvas>
-
-      {/* 2D UI Overlay */}
-      <div style={{
-        position: "absolute",
-        bottom: 24,
-        left: 0,
-        right: 0,
-        textAlign: "center",
-        pointerEvents: "none",
-        color: "#667",
-        fontSize: 13,
-        fontFamily: "system-ui, sans-serif",
-        letterSpacing: "0.05em",
-      }}>
-        <span style={{ opacity: 0.6 }}>
-          Click a concept to select · Double-click to zoom in · Scroll to zoom · Drag to orbit
-        </span>
-      </div>
-
-      {/* Title */}
-      <div style={{
-        position: "absolute",
-        top: 20,
-        left: 24,
-        color: "#445",
-        fontSize: 11,
-        fontFamily: "system-ui, sans-serif",
-        letterSpacing: "0.15em",
-        textTransform: "uppercase",
-        opacity: 0.5,
-      }}>
-        Concept Space
-      </div>
     </div>
   );
 }
