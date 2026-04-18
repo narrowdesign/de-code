@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Knuth's Algorithms — Learn by Doing</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --green: #4ecdc4;
+    --yellow: #ffe66d;
+    --text: #e8e8e8;
+    --muted: #8b8fa3;
+    --radius: 14px;
+    --shadow: 0 4px 24px rgba(0,0,0,.3);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top:0; z-index: 100;
+    background: rgba(15,17,23,.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .nav h1 { font-size: 1.1rem; font-weight: 700; flex:1; }
+  .nav h1 span { color: var(--accent); }
+  .nav-progress {
+    font-size: .75rem; color: var(--muted);
+    background: var(--surface); padding: 4px 10px;
+    border-radius: 20px; white-space: nowrap;
+  }
+
+  /* ── HOME SCREEN ── */
+  .home { padding: 20px 16px 100px; }
+  .hero {
+    text-align: center; padding: 30px 10px 24px;
+  }
+  .hero-icon { font-size: 3rem; margin-bottom: 8px; }
+  .hero h2 { font-size: 1.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+  .hero p { color: var(--muted); font-size: .9rem; line-height: 1.5; max-width: 340px; margin: 0 auto; }
+
+  .chapter-label {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 28px 0 12px 4px;
+  }
+
+  .algo-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    border: 1px solid rgba(255,255,255,.04);
+  }
+  .algo-card:active { transform: scale(.97); }
+  .algo-card .icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 800; flex-shrink: 0;
+  }
+  .algo-card .info { flex: 1; }
+  .algo-card .info h3 { font-size: .95rem; font-weight: 700; margin-bottom: 2px; }
+  .algo-card .info p { font-size: .78rem; color: var(--muted); line-height: 1.3; }
+  .algo-card .badge {
+    font-size: .65rem; font-weight: 700; padding: 3px 8px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .badge-new { background: rgba(108,99,255,.15); color: var(--accent); }
+  .badge-done { background: rgba(78,205,196,.15); color: var(--green); }
+  .badge-progress { background: rgba(255,230,109,.15); color: var(--yellow); }
+
+  /* ── LESSON VIEW ── */
+  .lesson { display: none; padding: 0 0 100px; }
+  .lesson.active { display: block; }
+  .lesson-header {
+    padding: 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--accent);
+    font-size: .85rem; font-weight: 600; cursor: pointer;
+    padding: 6px 0; margin-bottom: 12px;
+  }
+  .lesson-header h2 { font-size: 1.3rem; font-weight: 800; }
+  .lesson-header .subtitle { color: var(--muted); font-size: .82rem; margin-top: 2px; }
+
+  .lesson-body { padding: 20px 16px; }
+  .section-title {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent);
+    margin: 24px 0 10px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .explanation {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: .88rem; line-height: 1.65;
+    color: #ccc;
+    margin-bottom: 16px;
+  }
+  .explanation strong { color: var(--text); }
+  .explanation code {
+    background: rgba(108,99,255,.12);
+    color: var(--accent);
+    padding: 2px 6px; border-radius: 4px;
+    font-size: .82rem;
+  }
+
+  .step-box {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .step-box .step-label {
+    font-size: .72rem; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .step-box p { font-size: .85rem; line-height: 1.5; margin-top: 4px; }
+
+  /* ── VISUALIZATION ── */
+  .viz-container {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin: 16px 0;
+    min-height: 100px;
+    position: relative;
+  }
+  .viz-array {
+    display: flex; gap: 6px; justify-content: center;
+    flex-wrap: wrap; padding: 8px 0;
+  }
+  .viz-cell {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-weight: 700; font-size: .9rem;
+    background: var(--surface2);
+    transition: all .3s ease;
+    position: relative;
+  }
+  .viz-cell.highlight { background: var(--accent); color: #fff; }
+  .viz-cell.compare { background: var(--accent2); color: #fff; }
+  .viz-cell.sorted { background: var(--green); color: #111; }
+  .viz-cell.found { background: var(--yellow); color: #111; }
+  .viz-vars {
+    display: flex; gap: 12px; justify-content: center;
+    margin-top: 12px; flex-wrap: wrap;
+  }
+  .viz-var {
+    background: var(--surface2); border-radius: 8px;
+    padding: 8px 14px; text-align: center;
+    min-width: 60px;
+  }
+  .viz-var .label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .viz-var .value { font-size: 1.1rem; font-weight: 800; color: var(--accent); margin-top: 2px; }
+
+  .viz-controls {
+    display: flex; gap: 8px; justify-content: center;
+    margin-top: 14px;
+  }
+  .viz-btn {
+    padding: 8px 18px; border-radius: 8px;
+    border: none; font-size: .8rem; font-weight: 700;
+    cursor: pointer; transition: transform .1s;
+  }
+  .viz-btn:active { transform: scale(.95); }
+  .viz-btn-primary { background: var(--accent); color: #fff; }
+  .viz-btn-secondary { background: var(--surface2); color: var(--text); }
+  .viz-btn:disabled { opacity:.4; cursor: default; }
+
+  .viz-status {
+    text-align: center; font-size: .8rem; color: var(--muted);
+    margin-top: 10px; min-height: 20px;
+  }
+
+  /* ── EXERCISES ── */
+  .exercise-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,.04);
+  }
+  .exercise-card h4 {
+    font-size: .85rem; font-weight: 700; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .exercise-card h4 .num {
+    background: var(--accent); color: #fff;
+    width: 22px; height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; flex-shrink: 0;
+  }
+  .exercise-card .prompt {
+    font-size: .85rem; line-height: 1.5; color: #bbb;
+    margin-bottom: 12px;
+  }
+  .exercise-card .prompt code {
+    background: rgba(108,99,255,.12); color: var(--accent);
+    padding: 1px 5px; border-radius: 3px; font-size: .8rem;
+  }
+
+  .choice-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .choice-btn {
+    padding: 12px 10px; border-radius: 10px;
+    background: var(--surface2); border: 2px solid transparent;
+    color: var(--text); font-size: .82rem; font-weight: 600;
+    cursor: pointer; text-align: center;
+    transition: all .15s;
+  }
+  .choice-btn:active { transform: scale(.97); }
+  .choice-btn.selected { border-color: var(--accent); background: rgba(108,99,255,.1); }
+  .choice-btn.correct { border-color: var(--green); background: rgba(78,205,196,.12); color: var(--green); }
+  .choice-btn.wrong { border-color: var(--accent2); background: rgba(255,101,132,.1); color: var(--accent2); }
+
+  .input-exercise {
+    display: flex; gap: 8px;
+  }
+  .input-exercise input {
+    flex:1; padding: 12px 14px; border-radius: 10px;
+    background: var(--surface2); border: 2px solid transparent;
+    color: var(--text); font-size: .9rem; font-weight: 600;
+    outline: none; transition: border-color .2s;
+  }
+  .input-exercise input:focus { border-color: var(--accent); }
+  .input-exercise button {
+    padding: 12px 18px; border-radius: 10px;
+    background: var(--accent); border: none;
+    color: #fff; font-weight: 700; font-size: .85rem;
+    cursor: pointer;
+  }
+
+  .code-exercise textarea {
+    width: 100%; padding: 12px; border-radius: 10px;
+    background: var(--surface2); border: 2px solid transparent;
+    color: var(--text); font-size: .82rem; font-family: 'SF Mono', 'Fira Code', monospace;
+    outline: none; resize: vertical; min-height: 100px;
+    line-height: 1.5;
+    transition: border-color .2s;
+  }
+  .code-exercise textarea:focus { border-color: var(--accent); }
+  .code-exercise button {
+    margin-top: 8px; padding: 10px 18px;
+    border-radius: 10px; background: var(--accent);
+    border: none; color: #fff; font-weight: 700;
+    font-size: .85rem; cursor: pointer; width: 100%;
+  }
+
+  .feedback {
+    margin-top: 10px; padding: 12px 14px;
+    border-radius: 10px; font-size: .82rem; line-height: 1.5;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: rgba(78,205,196,.1); color: var(--green); border: 1px solid rgba(78,205,196,.2); }
+  .feedback.wrong { background: rgba(255,101,132,.08); color: var(--accent2); border: 1px solid rgba(255,101,132,.15); }
+
+  /* ── TRACE TABLE ── */
+  .trace-table {
+    width: 100%; border-collapse: collapse;
+    font-size: .8rem; margin: 10px 0;
+  }
+  .trace-table th {
+    background: var(--surface2); padding: 8px 10px;
+    text-align: center; font-weight: 700; font-size: .72rem;
+    text-transform: uppercase; letter-spacing: .05em;
+    color: var(--muted);
+  }
+  .trace-table td {
+    padding: 8px 10px; text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .trace-table tr.active-row td { background: rgba(108,99,255,.08); color: var(--accent); font-weight: 700; }
+
+  /* ── SCROLL TABS ── */
+  .tabs {
+    display: flex; gap: 6px; padding: 16px 16px 0;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .tab {
+    padding: 8px 16px; border-radius: 8px;
+    background: var(--surface); border: none;
+    color: var(--muted); font-size: .78rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: all .15s;
+  }
+  .tab.active { background: var(--accent); color: #fff; }
+
+  /* ── UTILITIES ── */
+  .mt-16 { margin-top: 16px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ============== NAV ============== -->
+<div class="nav">
+  <h1><span>TAOCP</span> Algorithms</h1>
+  <div class="nav-progress" id="globalProgress">0 / 6 done</div>
+</div>
+
+<!-- ============== HOME ============== -->
+<div class="home" id="homeScreen">
+  <div class="hero">
+    <div class="hero-icon">&#128218;</div>
+    <h2>The Art of Computer Programming</h2>
+    <p>Learn the foundational algorithms from Knuth's masterwork — step by step, with interactive exercises.</p>
+  </div>
+
+  <div class="chapter-label">Chapter 1 — Fundamental Concepts</div>
+  <div class="algo-card" onclick="openLesson(0)">
+    <div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent);">E</div>
+    <div class="info">
+      <h3>Algorithm E — Euclid's GCD</h3>
+      <p>The very first algorithm in TAOCP. Find the greatest common divisor of two integers.</p>
+    </div>
+    <span class="badge badge-new" id="badge-0">Start</span>
+  </div>
+  <div class="algo-card" onclick="openLesson(1)">
+    <div class="icon" style="background:rgba(255,101,132,.12);color:var(--accent2);">F</div>
+    <div class="info">
+      <h3>Algorithm F — Fibonacci & GCD</h3>
+      <p>Why Fibonacci numbers create the worst case for Euclid's algorithm.</p>
+    </div>
+    <span class="badge badge-new" id="badge-1">Start</span>
+  </div>
+
+  <div class="chapter-label">Chapter 5 — Sorting</div>
+  <div class="algo-card" onclick="openLesson(2)">
+    <div class="icon" style="background:rgba(78,205,196,.12);color:var(--green);">S</div>
+    <div class="info">
+      <h3>Algorithm S — Straight Insertion</h3>
+      <p>Sort by repeatedly inserting elements into their correct position.</p>
+    </div>
+    <span class="badge badge-new" id="badge-2">Start</span>
+  </div>
+  <div class="algo-card" onclick="openLesson(3)">
+    <div class="icon" style="background:rgba(255,230,109,.12);color:var(--yellow);">B</div>
+    <div class="info">
+      <h3>Algorithm B — Bubble Sort</h3>
+      <p>The classic comparison-based sort that bubbles elements into place.</p>
+    </div>
+    <span class="badge badge-new" id="badge-3">Start</span>
+  </div>
+
+  <div class="chapter-label">Chapter 6 — Searching</div>
+  <div class="algo-card" onclick="openLesson(4)">
+    <div class="icon" style="background:rgba(108,99,255,.15);color:var(--accent);">T</div>
+    <div class="info">
+      <h3>Algorithm T — Sequential Search</h3>
+      <p>The simplest search: check each element one by one.</p>
+    </div>
+    <span class="badge badge-new" id="badge-4">Start</span>
+  </div>
+  <div class="algo-card" onclick="openLesson(5)">
+    <div class="icon" style="background:rgba(255,101,132,.12);color:var(--accent2);">B</div>
+    <div class="info">
+      <h3>Algorithm B — Binary Search</h3>
+      <p>Divide and conquer on sorted data. Logarithmic time.</p>
+    </div>
+    <span class="badge badge-new" id="badge-5">Start</span>
+  </div>
+</div>
+
+<!-- ============== LESSON CONTAINER ============== -->
+<div class="lesson" id="lessonView"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DATA: All 6 lessons
+// ═══════════════════════════════════════════════════
+const lessons = [
+// ────── 0: ALGORITHM E — Euclid's GCD ──────
+{
+  title: "Algorithm E — Euclid's GCD",
+  subtitle: "TAOCP Vol. 1, Section 1.1",
+  explanation: `<strong>Euclid's algorithm</strong> is the very first algorithm presented in <em>The Art of Computer Programming</em>. Given two positive integers <code>m</code> and <code>n</code>, it finds their <strong>greatest common divisor</strong> (GCD) — the largest integer that divides both.<br><br>
+Knuth presents it in his precise step-notation style. The key insight: <code>gcd(m, n) = gcd(n, m mod n)</code>. When the remainder hits zero, the other value is the answer.`,
+  steps: [
+    { label: "E1 [Find remainder]", text: "Divide m by n and let r be the remainder. (0 ≤ r < n)" },
+    { label: "E2 [Is it zero?]", text: "If r = 0, the algorithm terminates; n is the answer." },
+    { label: "E3 [Reduce]", text: "Set m ← n, n ← r, and go back to step E1." }
+  ],
+  viz: "euclid",
+  exercises: [
+    {
+      type: "choice",
+      prompt: "What is <code>gcd(119, 544)</code> using Algorithm E?",
+      choices: ["7", "17", "1", "34"],
+      answer: 1
+    },
+    {
+      type: "input",
+      prompt: "Compute <code>gcd(48, 18)</code> by hand. Enter the result:",
+      answer: "6"
+    },
+    {
+      type: "trace",
+      prompt: "Trace Algorithm E for <code>m=544, n=119</code>. How many times is step E1 executed?",
+      choices: ["3", "4", "5", "6"],
+      answer: 2
+    },
+    {
+      type: "input",
+      prompt: "If <code>m = 0</code> and <code>n = 5</code>, what does Algorithm E return?",
+      answer: "5"
+    },
+    {
+      type: "code",
+      prompt: "Implement Euclid's algorithm in JavaScript. Your function should be called <code>gcd(m, n)</code> and return the GCD.",
+      template: "function gcd(m, n) {\n  // your code here\n}",
+      tests: [[48,18,6],[544,119,17],[100,25,25],[13,7,1],[0,5,5]]
+    }
+  ]
+},
+// ────── 1: ALGORITHM F — Fibonacci & GCD ──────
+{
+  title: "Algorithm F — Fibonacci & GCD",
+  subtitle: "TAOCP Vol. 1, Section 1.1 (Analysis)",
+  explanation: `After presenting Algorithm E, Knuth asks: <strong>"How fast is it?"</strong> The answer involves Fibonacci numbers.<br><br>
+<strong>Lamé's theorem</strong> (1844): The number of division steps in Algorithm E is at most <strong>5 times</strong> the number of digits in the smaller input. The <em>worst case</em> occurs when the inputs are consecutive Fibonacci numbers — because the remainders shrink as slowly as possible.<br><br>
+Fibonacci numbers: <code>F₀=0, F₁=1, F₂=1, F₃=2, F₄=3, F₅=5, F₆=8, F₇=13, F₈=21, …</code><br>
+Each is the sum of the two before it: <code>Fₙ = Fₙ₋₁ + Fₙ₋₂</code>.`,
+  steps: [
+    { label: "Key insight", text: "gcd(Fₙ₊₁, Fₙ) always takes exactly n − 1 division steps — the maximum possible." },
+    { label: "Why?", text: "Because Fₙ₊₁ mod Fₙ = Fₙ₋₁ (since Fₙ₊₁ = 1·Fₙ + Fₙ₋₁). Each step peels off one Fibonacci number." },
+    { label: "Result", text: "Algorithm E always terminates, and consecutive Fibonacci numbers are its worst-case inputs." }
+  ],
+  viz: "fibonacci",
+  exercises: [
+    {
+      type: "input",
+      prompt: "What is the 10th Fibonacci number? (F₁=1, F₂=1, F₃=2, …)",
+      answer: "55"
+    },
+    {
+      type: "choice",
+      prompt: "How many steps does <code>gcd(F₈, F₇) = gcd(21, 13)</code> take?",
+      choices: ["4", "5", "6", "7"],
+      answer: 2
+    },
+    {
+      type: "choice",
+      prompt: "According to Lamé's theorem, the max steps to find <code>gcd(m, n)</code> where <code>n < 100</code> is at most:",
+      choices: ["5", "8", "10", "14"],
+      answer: 2
+    },
+    {
+      type: "input",
+      prompt: "What is <code>gcd(89, 55)</code>? (Hint: these are consecutive Fibonacci numbers.)",
+      answer: "1"
+    },
+    {
+      type: "code",
+      prompt: "Write a function <code>fib(n)</code> that returns the nth Fibonacci number (F₁=1, F₂=1, F₃=2, …).",
+      template: "function fib(n) {\n  // your code here\n}",
+      tests: [[1,null,1],[2,null,1],[3,null,2],[7,null,13],[10,null,55]]
+    }
+  ]
+},
+// ────── 2: ALGORITHM S — Straight Insertion Sort ──────
+{
+  title: "Algorithm S — Straight Insertion",
+  subtitle: "TAOCP Vol. 3, Section 5.2.1",
+  explanation: `<strong>Straight insertion sort</strong> is one of the simplest sorting methods. Knuth presents it as the first sorting algorithm in Chapter 5.<br><br>
+Think of sorting a hand of playing cards: you pick up cards one at a time and insert each into its correct position among the cards already in your hand.<br><br>
+The algorithm processes elements left to right. For each element, it shifts larger elements rightward to make room, then inserts the element into the gap. It runs in <strong>O(n²)</strong> time but is efficient for small or nearly-sorted arrays.`,
+  steps: [
+    { label: "S1 [Loop on j]", text: "Set j ← 2 (start with the second element)." },
+    { label: "S2 [Set up key]", text: "Set K ← A[j] (the element to insert) and i ← j − 1." },
+    { label: "S3 [Compare K : A[i]]", text: "If K ≥ A[i], go to S5 (insertion point found)." },
+    { label: "S4 [Move, decrease i]", text: "Set A[i+1] ← A[i], then i ← i − 1. If i > 0, go to S3; otherwise go to S5." },
+    { label: "S5 [Insert]", text: "Set A[i+1] ← K. Increase j by 1. If j ≤ n, go to S2; otherwise done." }
+  ],
+  viz: "insertion",
+  exercises: [
+    {
+      type: "choice",
+      prompt: "After inserting the 3rd element of <code>[5, 2, 4, 6, 1, 3]</code>, what does the array look like?",
+      choices: ["[2, 4, 5, 6, 1, 3]", "[2, 5, 4, 6, 1, 3]", "[2, 4, 5, 1, 6, 3]", "[4, 2, 5, 6, 1, 3]"],
+      answer: 0
+    },
+    {
+      type: "choice",
+      prompt: "What is the best-case number of comparisons for insertion sort on n elements?",
+      choices: ["n", "n − 1", "n²", "n log n"],
+      answer: 1
+    },
+    {
+      type: "input",
+      prompt: "How many element shifts occur when sorting <code>[4, 3, 2, 1]</code> with insertion sort?",
+      answer: "6"
+    },
+    {
+      type: "choice",
+      prompt: "Insertion sort is most efficient when the input is:",
+      choices: ["Nearly sorted", "Sorted in reverse", "Random", "All equal"],
+      answer: 0
+    },
+    {
+      type: "code",
+      prompt: "Implement insertion sort. Your function should sort the array in place and return it.",
+      template: "function insertionSort(arr) {\n  // your code here\n  return arr;\n}",
+      tests: [[[5,2,4,6,1,3],null,[1,2,3,4,5,6]],[[1],null,[1]],[[3,1,2],null,[1,2,3]],[[4,3,2,1],null,[1,2,3,4]]]
+    }
+  ]
+},
+// ────── 3: ALGORITHM B — Bubble Sort ──────
+{
+  title: "Algorithm B — Bubble Sort",
+  subtitle: "TAOCP Vol. 3, Section 5.2.2",
+  explanation: `<strong>Bubble sort</strong> repeatedly steps through the array, comparing adjacent elements and swapping them if they're in the wrong order. Elements "bubble up" to their correct positions.<br><br>
+Knuth analyzes this algorithm thoroughly — and ultimately shows that it's generally <em>slower</em> than insertion sort. He writes: <em>"The bubble sort seems to have nothing to recommend it, except a catchy name."</em><br><br>
+Despite this, understanding bubble sort is valuable: it teaches comparison-swap paradigms and introduces the concept of a <strong>bound</strong> — tracking which part of the array is already sorted.`,
+  steps: [
+    { label: "B1 [Initialize BOUND]", text: "Set BOUND ← n (the whole array is unsorted)." },
+    { label: "B2 [Loop on j]", text: "Set t ← 0, j ← 1." },
+    { label: "B3 [Compare/swap]", text: "If A[j] > A[j+1], swap them and set t ← j." },
+    { label: "B4 [Step j]", text: "Increase j by 1. If j < BOUND, go to B3." },
+    { label: "B5 [Any swaps?]", text: "Set BOUND ← t. If t ≠ 0 (swaps happened), go to B2. Otherwise done." }
+  ],
+  viz: "bubble",
+  exercises: [
+    {
+      type: "choice",
+      prompt: "After the first complete pass of bubble sort on <code>[5, 1, 4, 2, 8]</code>, which element is in its final position?",
+      choices: ["1", "5", "8", "2"],
+      answer: 2
+    },
+    {
+      type: "input",
+      prompt: "How many swaps occur in the first pass of bubble sort on <code>[5, 3, 1, 4, 2]</code>?",
+      answer: "3"
+    },
+    {
+      type: "choice",
+      prompt: "What is the purpose of the BOUND variable in Knuth's version?",
+      choices: [
+        "Skip already-sorted tail",
+        "Count total swaps",
+        "Track minimum value",
+        "Limit array size"
+      ],
+      answer: 0
+    },
+    {
+      type: "choice",
+      prompt: "Which is generally faster according to Knuth?",
+      choices: ["Insertion sort", "Bubble sort", "They are equal", "Depends on data"],
+      answer: 0
+    },
+    {
+      type: "code",
+      prompt: "Implement bubble sort (with Knuth's BOUND optimization). Sort in place and return the array.",
+      template: "function bubbleSort(arr) {\n  // your code here\n  return arr;\n}",
+      tests: [[[5,1,4,2,8],null,[1,2,4,5,8]],[[1],null,[1]],[[2,1],null,[1,2]],[[4,3,2,1],null,[1,2,3,4]]]
+    }
+  ]
+},
+// ────── 4: ALGORITHM T — Sequential Search ──────
+{
+  title: "Algorithm T — Sequential Search",
+  subtitle: "TAOCP Vol. 3, Section 6.1",
+  explanation: `<strong>Sequential search</strong> (also called linear search) is the most straightforward searching method: examine elements one after another until you find the target or run out of elements.<br><br>
+Knuth presents it with an important optimization: the <strong>sentinel</strong>. By placing the search key at the end of the array, you eliminate the need to check the array bounds on every iteration — roughly cutting the overhead in half.<br><br>
+The average number of comparisons is <code>(n + 1) / 2</code> for a successful search. It runs in <strong>O(n)</strong> time.`,
+  steps: [
+    { label: "T1 [Initialize]", text: "Set i ← 1." },
+    { label: "T2 [Compare]", text: "If K = A[i], the algorithm terminates successfully." },
+    { label: "T3 [Advance]", text: "Increase i by 1. If i ≤ n, go to T2; otherwise the search is unsuccessful." }
+  ],
+  viz: "linear",
+  exercises: [
+    {
+      type: "choice",
+      prompt: "Searching for <code>7</code> in <code>[3, 1, 7, 5, 9]</code>, how many comparisons does sequential search make?",
+      choices: ["1", "2", "3", "5"],
+      answer: 2
+    },
+    {
+      type: "input",
+      prompt: "What is the average number of comparisons for a successful search in a 10-element array?",
+      answer: "5.5"
+    },
+    {
+      type: "choice",
+      prompt: "What is a 'sentinel' in the context of sequential search?",
+      choices: [
+        "The target placed at array end",
+        "A guard against overflow",
+        "The first element",
+        "A sorted marker"
+      ],
+      answer: 0
+    },
+    {
+      type: "choice",
+      prompt: "Does sequential search require the array to be sorted?",
+      choices: ["No", "Yes", "Only for optimization", "Only for sentinel"],
+      answer: 0
+    },
+    {
+      type: "code",
+      prompt: "Write <code>linearSearch(arr, target)</code> that returns the index (0-based) of target, or -1 if not found.",
+      template: "function linearSearch(arr, target) {\n  // your code here\n}",
+      tests: [[[3,1,7,5,9],7,2],[[10,20,30],20,1],[[1,2,3],4,-1],[[42],42,0]]
+    }
+  ]
+},
+// ────── 5: ALGORITHM B — Binary Search ──────
+{
+  title: "Algorithm B — Binary Search",
+  subtitle: "TAOCP Vol. 3, Section 6.2.1",
+  explanation: `<strong>Binary search</strong> is one of the most important algorithms in computer science. It searches a <em>sorted</em> array by repeatedly halving the search space.<br><br>
+Knuth notes that binary search is deceptively tricky to implement correctly — off-by-one errors are extremely common. He presents it with careful attention to the <strong>invariant</strong>: the target, if present, always lies within the current bounds.<br><br>
+It makes at most <code>⌊log₂ n⌋ + 1</code> comparisons — exponentially better than linear search for large arrays.`,
+  steps: [
+    { label: "B1 [Initialize]", text: "Set l ← 1, u ← n." },
+    { label: "B2 [Get midpoint]", text: "If l > u, the search is unsuccessful. Otherwise set m ← ⌊(l + u) / 2⌋." },
+    { label: "B3 [Compare]", text: "If K < A[m], go to B4; if K > A[m], go to B5; if K = A[m], the search is successful." },
+    { label: "B4 [Narrow to upper half]", text: "Set u ← m − 1 and go to B2." },
+    { label: "B5 [Narrow to lower half]", text: "Set l ← m + 1 and go to B2." }
+  ],
+  viz: "binary",
+  exercises: [
+    {
+      type: "choice",
+      prompt: "Searching for <code>23</code> in <code>[2, 5, 8, 12, 16, 23, 38, 56, 72, 91]</code>, how many comparisons?",
+      choices: ["1", "2", "3", "4"],
+      answer: 1
+    },
+    {
+      type: "input",
+      prompt: "What is the maximum number of comparisons for binary search on a 1000-element array?",
+      answer: "10"
+    },
+    {
+      type: "choice",
+      prompt: "Binary search requires the input to be:",
+      choices: ["Sorted", "Unsorted", "Unique values", "Power-of-2 size"],
+      answer: 0
+    },
+    {
+      type: "choice",
+      prompt: "What is the time complexity of binary search?",
+      choices: ["O(log n)", "O(n)", "O(n log n)", "O(1)"],
+      answer: 0
+    },
+    {
+      type: "code",
+      prompt: "Write <code>binarySearch(arr, target)</code> for a sorted array. Return the index (0-based) or -1 if not found.",
+      template: "function binarySearch(arr, target) {\n  // your code here\n}",
+      tests: [[[2,5,8,12,16,23,38,56,72,91],23,5],[[1,3,5,7,9],7,3],[[10,20,30],15,-1],[[42],42,0]]
+    }
+  ]
+}
+];
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let progress = JSON.parse(localStorage.getItem('knuth_progress') || '{}');
+// progress[lessonIdx] = { completed: Set of exercise indices, vizSeen: bool }
+
+function getProgress(idx) {
+  if (!progress[idx]) progress[idx] = { completed: [], vizSeen: false };
+  return progress[idx];
+}
+function saveProgress() { localStorage.setItem('knuth_progress', JSON.stringify(progress)); }
+
+function updateBadges() {
+  let done = 0;
+  lessons.forEach((l, i) => {
+    const p = getProgress(i);
+    const total = l.exercises.length;
+    const completed = p.completed.length;
+    const badge = document.getElementById('badge-' + i);
+    if (completed >= total) {
+      badge.textContent = 'Done';
+      badge.className = 'badge badge-done';
+      done++;
+    } else if (completed > 0) {
+      badge.textContent = completed + '/' + total;
+      badge.className = 'badge badge-progress';
+    } else {
+      badge.textContent = 'Start';
+      badge.className = 'badge badge-new';
+    }
+  });
+  document.getElementById('globalProgress').textContent = done + ' / ' + lessons.length + ' done';
+}
+
+// ═══════════════════════════════════════════════════
+//  LESSON RENDERING
+// ═══════════════════════════════════════════════════
+let currentLesson = -1;
+
+function openLesson(idx) {
+  currentLesson = idx;
+  const lesson = lessons[idx];
+  const view = document.getElementById('lessonView');
+
+  let html = `
+    <div class="lesson-header">
+      <button class="back-btn" onclick="closeLesson()">&#8592; Back</button>
+      <h2>${lesson.title}</h2>
+      <div class="subtitle">${lesson.subtitle}</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="showTab(this,'learn-${idx}')">Learn</button>
+      <button class="tab" onclick="showTab(this,'viz-${idx}')">Visualize</button>
+      <button class="tab" onclick="showTab(this,'exercises-${idx}')">Exercises</button>
+    </div>
+    <div class="lesson-body" id="learn-${idx}">
+      <div class="section-title">What is it?</div>
+      <div class="explanation">${lesson.explanation}</div>
+      <div class="section-title">Knuth's Steps</div>
+      ${lesson.steps.map(s => `<div class="step-box"><div class="step-label">${s.label}</div><p>${s.text}</p></div>`).join('')}
+    </div>
+    <div class="lesson-body hidden" id="viz-${idx}">
+      <div class="section-title">Step-by-Step Visualization</div>
+      <div class="viz-container" id="viz-area-${idx}"></div>
+    </div>
+    <div class="lesson-body hidden" id="exercises-${idx}">
+      <div class="section-title">Exercises (${lesson.exercises.length})</div>
+      ${lesson.exercises.map((ex, ei) => renderExercise(idx, ei, ex)).join('')}
+    </div>
+  `;
+
+  view.innerHTML = html;
+  view.classList.add('active');
+  document.getElementById('homeScreen').classList.add('hidden');
+  window.scrollTo(0, 0);
+  initViz(idx);
+}
+
+function closeLesson() {
+  document.getElementById('lessonView').classList.remove('active');
+  document.getElementById('homeScreen').classList.remove('hidden');
+  currentLesson = -1;
+  window.scrollTo(0, 0);
+  updateBadges();
+}
+
+function showTab(btn, id) {
+  const tabs = btn.parentElement.querySelectorAll('.tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const bodies = btn.parentElement.parentElement.querySelectorAll('.lesson-body');
+  bodies.forEach(b => b.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════
+//  EXERCISE RENDERING
+// ═══════════════════════════════════════════════════
+function renderExercise(li, ei, ex) {
+  const p = getProgress(li);
+  const done = p.completed.includes(ei);
+  let inner = '';
+
+  if (ex.type === 'choice' || ex.type === 'trace') {
+    inner = `<div class="choice-grid" id="choices-${li}-${ei}">
+      ${ex.choices.map((c, ci) => `<button class="choice-btn ${done && ci === ex.answer ? 'correct' : ''}" onclick="checkChoice(${li},${ei},${ci})" ${done ? 'disabled' : ''}>${c}</button>`).join('')}
+    </div>`;
+  } else if (ex.type === 'input') {
+    inner = `<div class="input-exercise">
+      <input type="text" id="input-${li}-${ei}" placeholder="Your answer…" ${done ? 'disabled value="' + ex.answer + '"' : ''} inputmode="decimal">
+      <button onclick="checkInput(${li},${ei})" ${done ? 'disabled' : ''}>Check</button>
+    </div>`;
+  } else if (ex.type === 'code') {
+    inner = `<div class="code-exercise">
+      <textarea id="code-${li}-${ei}" spellcheck="false">${done ? '// Completed!' : ex.template}</textarea>
+      <button onclick="checkCode(${li},${ei})">Run Tests</button>
+    </div>`;
+  }
+
+  return `<div class="exercise-card" id="ex-${li}-${ei}">
+    <h4><span class="num">${ei + 1}</span> ${ex.type === 'code' ? 'Code Challenge' : (ex.type === 'trace' ? 'Trace Exercise' : 'Question')}</h4>
+    <div class="prompt">${ex.prompt}</div>
+    ${inner}
+    <div class="feedback" id="fb-${li}-${ei}"></div>
+  </div>`;
+}
+
+function showFeedback(li, ei, correct, msg) {
+  const fb = document.getElementById('fb-' + li + '-' + ei);
+  fb.className = 'feedback show ' + (correct ? 'correct' : 'wrong');
+  fb.textContent = msg;
+}
+
+function markComplete(li, ei) {
+  const p = getProgress(li);
+  if (!p.completed.includes(ei)) {
+    p.completed.push(ei);
+    saveProgress();
+  }
+}
+
+function checkChoice(li, ei, ci) {
+  const ex = lessons[li].exercises[ei];
+  const grid = document.getElementById('choices-' + li + '-' + ei);
+  const btns = grid.querySelectorAll('.choice-btn');
+
+  if (ci === ex.answer) {
+    btns[ci].classList.add('correct');
+    btns.forEach(b => b.disabled = true);
+    showFeedback(li, ei, true, 'Correct!');
+    markComplete(li, ei);
+  } else {
+    btns[ci].classList.add('wrong');
+    btns[ci].disabled = true;
+    showFeedback(li, ei, false, 'Not quite — try again.');
+  }
+}
+
+function checkInput(li, ei) {
+  const ex = lessons[li].exercises[ei];
+  const input = document.getElementById('input-' + li + '-' + ei);
+  const val = input.value.trim();
+  if (val === ex.answer) {
+    input.disabled = true;
+    showFeedback(li, ei, true, 'Correct!');
+    markComplete(li, ei);
+  } else {
+    showFeedback(li, ei, false, 'Not quite. Try again!');
+  }
+}
+
+function checkCode(li, ei) {
+  const ex = lessons[li].exercises[ei];
+  const code = document.getElementById('code-' + li + '-' + ei).value;
+  let fn;
+  try {
+    fn = new Function('return (' + code + ')')();
+  } catch(e) {
+    showFeedback(li, ei, false, 'Syntax error: ' + e.message);
+    return;
+  }
+
+  let passed = 0;
+  for (const t of ex.tests) {
+    try {
+      let args = [];
+      // t = [arg1, arg2, expected] — null means no second arg
+      if (t[1] !== null) {
+        args = [JSON.parse(JSON.stringify(t[0])), t[1]];
+      } else {
+        args = [JSON.parse(JSON.stringify(t[0]))];
+      }
+      const result = fn(...args);
+      const expected = t[t.length - 1];
+      if (JSON.stringify(result) === JSON.stringify(expected)) {
+        passed++;
+      } else {
+        showFeedback(li, ei, false, `Test failed: ${fn.name}(${args.map(a=>JSON.stringify(a)).join(', ')}) returned ${JSON.stringify(result)}, expected ${JSON.stringify(expected)}`);
+        return;
+      }
+    } catch(e) {
+      showFeedback(li, ei, false, 'Runtime error: ' + e.message);
+      return;
+    }
+  }
+  showFeedback(li, ei, true, `All ${passed} tests passed!`);
+  markComplete(li, ei);
+}
+
+// ═══════════════════════════════════════════════════
+//  VISUALIZATIONS
+// ═══════════════════════════════════════════════════
+let vizState = {};
+
+function initViz(li) {
+  const area = document.getElementById('viz-area-' + li);
+  if (!area) return;
+  const type = lessons[li].viz;
+
+  if (type === 'euclid') initEuclidViz(area, li);
+  else if (type === 'fibonacci') initFibViz(area, li);
+  else if (type === 'insertion') initSortViz(area, li, 'insertion');
+  else if (type === 'bubble') initSortViz(area, li, 'bubble');
+  else if (type === 'linear') initSearchViz(area, li, 'linear');
+  else if (type === 'binary') initSearchViz(area, li, 'binary');
+}
+
+// ─── Euclid Viz ───
+function initEuclidViz(area, li) {
+  const m0 = 544, n0 = 119;
+  let steps = [];
+  let m = m0, n = n0;
+  while (n !== 0) {
+    const r = m % n;
+    steps.push({ m, n, r });
+    m = n; n = r;
+  }
+  steps.push({ m, n: 0, r: null, done: true });
+  vizState[li] = { steps, idx: 0 };
+
+  renderEuclidViz(area, li);
+}
+
+function renderEuclidViz(area, li) {
+  const vs = vizState[li];
+  const s = vs.steps[vs.idx];
+  const isDone = s.done;
+
+  area.innerHTML = `
+    <div class="viz-vars">
+      <div class="viz-var"><div class="label">m</div><div class="value">${s.m}</div></div>
+      <div class="viz-var"><div class="label">n</div><div class="value">${s.n}</div></div>
+      ${!isDone ? `<div class="viz-var"><div class="label">r = m mod n</div><div class="value">${s.r}</div></div>` : ''}
+    </div>
+    <div class="viz-status">${isDone ? 'Done! GCD = ' + s.m : 'Step E1: ' + s.m + ' mod ' + s.n + ' = ' + s.r + (s.r === 0 ? ' → E2: remainder is 0, done!' : ' → E3: set m←' + s.n + ', n←' + s.r)}</div>
+    <table class="trace-table">
+      <tr><th>Step</th><th>m</th><th>n</th><th>r</th></tr>
+      ${vs.steps.slice(0, vs.idx + 1).map((row, i) => `<tr class="${i === vs.idx ? 'active-row' : ''}"><td>${i + 1}</td><td>${row.m}</td><td>${row.n}</td><td>${row.r !== null ? row.r : '—'}</td></tr>`).join('')}
+    </table>
+    <div class="viz-controls">
+      <button class="viz-btn viz-btn-secondary" onclick="euclidStep(${li},-1)" ${vs.idx === 0 ? 'disabled' : ''}>Prev</button>
+      <button class="viz-btn viz-btn-primary" onclick="euclidStep(${li},1)" ${isDone ? 'disabled' : ''}>Next Step</button>
+      <button class="viz-btn viz-btn-secondary" onclick="euclidReset(${li})">Reset</button>
+    </div>
+  `;
+}
+
+window.euclidStep = function(li, dir) {
+  const vs = vizState[li];
+  vs.idx = Math.max(0, Math.min(vs.steps.length - 1, vs.idx + dir));
+  renderEuclidViz(document.getElementById('viz-area-' + li), li);
+};
+window.euclidReset = function(li) {
+  vizState[li].idx = 0;
+  renderEuclidViz(document.getElementById('viz-area-' + li), li);
+};
+
+// ─── Fibonacci Viz ───
+function initFibViz(area, li) {
+  let fibs = [1, 1];
+  for (let i = 2; i < 12; i++) fibs.push(fibs[i-1] + fibs[i-2]);
+  vizState[li] = { fibs, idx: 0 };
+  renderFibViz(area, li);
+}
+
+function renderFibViz(area, li) {
+  const vs = vizState[li];
+  area.innerHTML = `
+    <div style="text-align:center;margin-bottom:12px;font-size:.82rem;color:var(--muted);">Fibonacci Sequence — tap a pair to see GCD steps</div>
+    <div class="viz-array">
+      ${vs.fibs.map((f, i) => `<div class="viz-cell ${i === vs.idx || i === vs.idx + 1 ? 'highlight' : ''}" onclick="fibSelect(${li},${i})" style="cursor:pointer;width:52px;">
+        <div style="font-size:.55rem;position:absolute;top:2px;left:6px;color:rgba(255,255,255,.4);">F${i+1}</div>
+        ${f}
+      </div>`).join('')}
+    </div>
+    <div class="viz-status" id="fib-status-${li}">${vs.idx < vs.fibs.length - 1 ? `gcd(${vs.fibs[vs.idx + 1]}, ${vs.fibs[vs.idx]}): tap "Show Steps" to trace` : 'Select a pair'}</div>
+    <div class="viz-controls">
+      <button class="viz-btn viz-btn-primary" onclick="fibTrace(${li})" ${vs.idx >= vs.fibs.length - 1 ? 'disabled' : ''}>Show Steps</button>
+    </div>
+    <div id="fib-trace-${li}"></div>
+  `;
+}
+
+window.fibSelect = function(li, i) {
+  if (i >= vizState[li].fibs.length - 1) return;
+  vizState[li].idx = i;
+  renderFibViz(document.getElementById('viz-area-' + li), li);
+};
+
+window.fibTrace = function(li) {
+  const vs = vizState[li];
+  let m = vs.fibs[vs.idx + 1], n = vs.fibs[vs.idx];
+  let rows = [];
+  while (n !== 0) {
+    const r = m % n;
+    rows.push({ m, n, r });
+    m = n; n = r;
+  }
+  document.getElementById('fib-trace-' + li).innerHTML = `
+    <table class="trace-table mt-16">
+      <tr><th>Step</th><th>m</th><th>n</th><th>r</th></tr>
+      ${rows.map((row, i) => `<tr><td>${i+1}</td><td>${row.m}</td><td>${row.n}</td><td>${row.r}</td></tr>`).join('')}
+    </table>
+    <div style="text-align:center;font-size:.82rem;color:var(--green);margin-top:8px;">${rows.length} steps — worst case for n = ${vs.fibs[vs.idx]}</div>
+  `;
+};
+
+// ─── Sorting Viz ───
+function initSortViz(area, li, type) {
+  const arr = [5, 2, 8, 1, 9, 3, 7, 4];
+  let snapshots = [];
+
+  if (type === 'insertion') {
+    let a = [...arr];
+    snapshots.push({ arr: [...a], msg: 'Initial array', highlights: [], sorted: [0] });
+    for (let j = 1; j < a.length; j++) {
+      const key = a[j];
+      let i = j - 1;
+      snapshots.push({ arr: [...a], msg: `Pick key = ${key} (position ${j})`, highlights: [j], sorted: Array.from({length:j}, (_,x)=>x) });
+      while (i >= 0 && a[i] > key) {
+        a[i + 1] = a[i];
+        snapshots.push({ arr: [...a], msg: `Shift ${a[i]} right`, highlights: [i+1], compare: [i], sorted: Array.from({length:j}, (_,x)=>x) });
+        i--;
+      }
+      a[i + 1] = key;
+      snapshots.push({ arr: [...a], msg: `Insert ${key} at position ${i+1}`, highlights: [i+1], sorted: Array.from({length:j+1}, (_,x)=>x) });
+    }
+    snapshots.push({ arr: [...a], msg: 'Sorted!', sorted: Array.from({length:a.length}, (_,x)=>x) });
+  } else {
+    let a = [...arr];
+    snapshots.push({ arr: [...a], msg: 'Initial array', highlights: [] });
+    let bound = a.length;
+    let anySwaps = true;
+    while (anySwaps) {
+      anySwaps = false;
+      let t = 0;
+      for (let j = 0; j < bound - 1; j++) {
+        snapshots.push({ arr: [...a], msg: `Compare A[${j}]=${a[j]} and A[${j+1}]=${a[j+1]}`, compare: [j, j+1] });
+        if (a[j] > a[j + 1]) {
+          [a[j], a[j+1]] = [a[j+1], a[j]];
+          t = j + 1;
+          anySwaps = true;
+          snapshots.push({ arr: [...a], msg: `Swap! → [${a.join(', ')}]`, highlights: [j, j+1] });
+        }
+      }
+      bound = t;
+      if (!anySwaps || bound <= 1) break;
+    }
+    snapshots.push({ arr: [...a], msg: 'Sorted!', sorted: Array.from({length:a.length}, (_,x)=>x) });
+  }
+
+  vizState[li] = { snapshots, idx: 0, type };
+  renderSortViz(area, li);
+}
+
+function renderSortViz(area, li) {
+  const vs = vizState[li];
+  const snap = vs.snapshots[vs.idx];
+  area.innerHTML = `
+    <div class="viz-array">
+      ${snap.arr.map((v, i) => {
+        let cls = '';
+        if (snap.sorted && snap.sorted.includes(i)) cls = 'sorted';
+        if (snap.highlights && snap.highlights.includes(i)) cls = 'highlight';
+        if (snap.compare && snap.compare.includes(i)) cls = 'compare';
+        return `<div class="viz-cell ${cls}">${v}</div>`;
+      }).join('')}
+    </div>
+    <div class="viz-status">${snap.msg}</div>
+    <div style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:4px;">Step ${vs.idx + 1} of ${vs.snapshots.length}</div>
+    <div class="viz-controls">
+      <button class="viz-btn viz-btn-secondary" onclick="sortStep(${li},-1)" ${vs.idx === 0 ? 'disabled' : ''}>Prev</button>
+      <button class="viz-btn viz-btn-primary" onclick="sortStep(${li},1)" ${vs.idx >= vs.snapshots.length - 1 ? 'disabled' : ''}>Next</button>
+      <button class="viz-btn viz-btn-secondary" onclick="sortReset(${li})">Reset</button>
+    </div>
+  `;
+}
+
+window.sortStep = function(li, dir) {
+  vizState[li].idx = Math.max(0, Math.min(vizState[li].snapshots.length - 1, vizState[li].idx + dir));
+  renderSortViz(document.getElementById('viz-area-' + li), li);
+};
+window.sortReset = function(li) {
+  vizState[li].idx = 0;
+  renderSortViz(document.getElementById('viz-area-' + li), li);
+};
+
+// ─── Search Viz ───
+function initSearchViz(area, li, type) {
+  const arr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91];
+  const target = 23;
+  let snapshots = [];
+
+  if (type === 'linear') {
+    for (let i = 0; i < arr.length; i++) {
+      snapshots.push({ arr, target, highlights: [i], msg: `Compare A[${i}]=${arr[i]} with ${target}`, found: false });
+      if (arr[i] === target) {
+        snapshots.push({ arr, target, found: true, foundIdx: i, msg: `Found ${target} at index ${i}!` });
+        break;
+      }
+    }
+  } else {
+    let l = 0, u = arr.length - 1;
+    while (l <= u) {
+      const m = Math.floor((l + u) / 2);
+      snapshots.push({ arr, target, l, u, mid: m, msg: `l=${l}, u=${u}, mid=${m}: A[${m}]=${arr[m]}`, found: false });
+      if (arr[m] === target) {
+        snapshots.push({ arr, target, l, u, mid: m, found: true, foundIdx: m, msg: `Found ${target} at index ${m}!` });
+        break;
+      } else if (target < arr[m]) {
+        u = m - 1;
+        snapshots.push({ arr, target, l, u, mid: m, msg: `${target} < ${arr[m]} → narrow left: u = ${u}`, found: false });
+      } else {
+        l = m + 1;
+        snapshots.push({ arr, target, l, u, mid: m, msg: `${target} > ${arr[m]} → narrow right: l = ${l}`, found: false });
+      }
+    }
+  }
+
+  vizState[li] = { snapshots, idx: 0, type };
+  renderSearchViz(area, li);
+}
+
+function renderSearchViz(area, li) {
+  const vs = vizState[li];
+  const snap = vs.snapshots[vs.idx];
+
+  area.innerHTML = `
+    <div style="text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:8px;">Searching for <strong style="color:var(--yellow)">${snap.target}</strong></div>
+    <div class="viz-array">
+      ${snap.arr.map((v, i) => {
+        let cls = '';
+        if (snap.found && snap.foundIdx === i) cls = 'found';
+        else if (snap.highlights && snap.highlights.includes(i)) cls = 'compare';
+        else if (snap.mid === i) cls = 'highlight';
+        else if (vs.type === 'binary' && !snap.found && i >= snap.l && i <= snap.u) cls = '';
+        else if (vs.type === 'binary' && !snap.found) cls = '';
+        return `<div class="viz-cell ${cls}" style="${vs.type === 'binary' && !snap.found && (i < snap.l || i > snap.u) ? 'opacity:.3;' : ''}">
+          <div style="font-size:.5rem;position:absolute;top:1px;color:rgba(255,255,255,.35);">${i}</div>
+          ${v}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="viz-status">${snap.msg}</div>
+    ${vs.type === 'binary' && !snap.found ? `<div class="viz-vars">
+      <div class="viz-var"><div class="label">l</div><div class="value">${snap.l}</div></div>
+      <div class="viz-var"><div class="label">u</div><div class="value">${snap.u}</div></div>
+      <div class="viz-var"><div class="label">mid</div><div class="value">${snap.mid !== undefined ? snap.mid : '—'}</div></div>
+    </div>` : ''}
+    <div class="viz-controls">
+      <button class="viz-btn viz-btn-secondary" onclick="searchStep(${li},-1)" ${vs.idx === 0 ? 'disabled' : ''}>Prev</button>
+      <button class="viz-btn viz-btn-primary" onclick="searchStep(${li},1)" ${vs.idx >= vs.snapshots.length - 1 ? 'disabled' : ''}>Next</button>
+      <button class="viz-btn viz-btn-secondary" onclick="searchReset(${li})">Reset</button>
+    </div>
+  `;
+}
+
+window.searchStep = function(li, dir) {
+  vizState[li].idx = Math.max(0, Math.min(vizState[li].snapshots.length - 1, vizState[li].idx + dir));
+  renderSearchViz(document.getElementById('viz-area-' + li), li);
+};
+window.searchReset = function(li) {
+  vizState[li].idx = 0;
+  renderSearchViz(document.getElementById('viz-area-' + li), li);
+};
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+updateBadges();
+</script>
+</body>
+</html>
